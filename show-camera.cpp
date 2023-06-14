@@ -3,14 +3,85 @@
 #include <dlib/opencv.h>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing.h>
+#include <dlib/dnn.h>
+
+
+#include <dlib/dnn.h>
+#include <dlib/gui_widgets.h>
+#include <dlib/clustering.h>
+#include <dlib/string.h>
+#include <dlib/image_io.h>
+#include <dlib/image_processing/frontal_face_detector.h>
+
+using namespace dlib;
+using namespace std;
+
+template <template <int,template<typename>class,int,typename> class block, int N, template<typename>class BN, typename SUBNET>
+using residual = add_prev1<block<N,BN,1,tag1<SUBNET>>>;
+
+template <template <int,template<typename>class,int,typename> class block, int N, template<typename>class BN, typename SUBNET>
+using residual_down = add_prev2<avg_pool<2,2,2,2,skip1<tag2<block<N,BN,2,tag1<SUBNET>>>>>>;
+
+template <int N, template <typename> class BN, int stride, typename SUBNET>
+using block  = BN<con<N,3,3,1,1,relu<BN<con<N,3,3,stride,stride,SUBNET>>>>>;
+
+template <int N, typename SUBNET> using ares      = relu<residual<block,N,affine,SUBNET>>;
+template <int N, typename SUBNET> using ares_down = relu<residual_down<block,N,affine,SUBNET>>;
+
+template <typename SUBNET> using alevel0 = ares_down<256,SUBNET>;
+template <typename SUBNET> using alevel1 = ares<256,ares<256,ares_down<256,SUBNET>>>;
+template <typename SUBNET> using alevel2 = ares<128,ares<128,ares_down<128,SUBNET>>>;
+template <typename SUBNET> using alevel3 = ares<64,ares<64,ares<64,ares_down<64,SUBNET>>>>;
+template <typename SUBNET> using alevel4 = ares<32,ares<32,ares<32,SUBNET>>>;
+
+using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
+                            alevel0<
+                            alevel1<
+                            alevel2<
+                            alevel3<
+                            alevel4<
+                            max_pool<3,3,2,2,relu<affine<con<32,7,7,2,2,
+                            input_rgb_image_sized<150>
+                            >>>>>>>>>>>>;
 
 int main() {
-    // Загрузка предобученной модели детектора лиц
-    dlib::frontal_face_detector detector = dlib::get_frontal_face_detector();
+    // Путь к файлу с эталоном лица
+    std::string faceSamplePath = "face_sample.jpg";
 
-    // Загрузка предобученной модели распознавания ключевых точек лица
-    dlib::shape_predictor predictor;
-    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> predictor;
+    // Путь к файлу с моделью для распознавания лиц
+    std::string faceModelPath = "dlib_face_recognition_resnet_model_v1.dat";
+
+    // Загрузка предобученной модели детектора лиц
+    dlib::frontal_face_detector faceDetector = dlib::get_frontal_face_detector();
+
+    // Загрузка предобученной модели для распознавания лиц
+    anet_type faceRecognizer;
+    dlib::deserialize(faceModelPath) >> faceRecognizer;
+
+    // Загрузка эталона лица для сравнения
+    cv::Mat faceSample = cv::imread(faceSamplePath);
+    if (faceSample.empty()) {
+        std::cerr << "Не удалось загрузить эталон лица." << std::endl;
+        return 1;
+    }
+
+    dlib::matrix<dlib::rgb_pixel> dlibFaceSample;
+    dlib::assign_image(dlibFaceSample, dlib::cv_image<dlib::bgr_pixel>(faceSample));
+
+    // Обнаружение лица на эталоне
+    std::vector<dlib::rectangle> faceRects = faceDetector(dlibFaceSample);
+
+    if (faceRects.empty()) {
+        std::cerr << "Лицо не обнаружено на эталоне." << std::endl;
+        return 1;
+    }
+
+    // Извлечение признаков лица для эталона
+
+    matrix<rgb_pixel> face_chip;
+    extract_image_chip(dlibFaceSample, faceRects[0], face_chip);
+
+    dlib::matrix<float, 0, 1> faceDescriptor = faceRecognizer(face_chip);
 
     // Запуск видеопотока с веб-камеры
     cv::VideoCapture videoCapture(0);
@@ -34,21 +105,27 @@ int main() {
         dlib::cv_image<unsigned char> dlibImage(grayFrame);
 
         // Обнаружение лиц на кадре
-        std::vector<dlib::rectangle> faces = detector(dlibImage);
+        std::vector<dlib::rectangle> faceRects = faceDetector(dlibImage);
 
         // Обработка каждого обнаруженного лица
-        for (const auto& face : faces) {
-            // Распознавание ключевых точек лица
-            dlib::full_object_detection landmarks = predictor(dlibImage, face);
+        for (const auto& faceRect : faceRects) {
+            // Распознавание лица
+            extract_image_chip(dlibImage, faceRect, face_chip);
+            dlib::matrix<float, 0, 1> faceDescriptor = faceRecognizer(face_chip);
 
-            // Отрисовка прямоугольника вокруг лица
-            cv::Rect faceRect(face.left(), face.top(), face.width(), face.height());
-            cv::rectangle(frame, faceRect, cv::Scalar(0, 255, 0), 2);
+            // Вычисление расстояния между эталоном лица и обнаруженным лицом
+            double distance = dlib::length(faceDescriptor - faceDescriptor);
 
-            // Отрисовка ключевых точек лица
-            for (unsigned int i = 0; i < landmarks.num_parts(); i++) {
-                cv::Point point(landmarks.part(i).x(), landmarks.part(i).y());
-                cv::circle(frame, point, 2, cv::Scalar(0, 0, 255), -1);
+            // Пороговое значение для сравнения расстояния
+            double threshold = 0.6;
+
+            // Сравнение расстояния с порогом
+            if (distance < threshold) {
+                cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
+                cv::putText(frame, "Detected Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
+            } else {
+                cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
+                cv::putText(frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
             }
         }
 
