@@ -1,3 +1,75 @@
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <dlib/opencv.h>
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing.h>
+
+int main() {
+    // Загрузка предобученной модели детектора лиц
+    dlib::frontal_face_detector detector = dlib::get_frontal_face_detector();
+
+    // Загрузка предобученной модели распознавания ключевых точек лица
+    dlib::shape_predictor predictor;
+    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> predictor;
+
+    // Запуск видеопотока с веб-камеры
+    cv::VideoCapture videoCapture(0);
+    if (!videoCapture.isOpened()) {
+        std::cerr << "Не удалось открыть веб-камеру." << std::endl;
+        return 1;
+    }
+
+    cv::Mat frame;
+    cv::namedWindow("Video");
+
+    while (true) {
+        // Захват кадра с веб-камеры
+        videoCapture >> frame;
+
+        // Преобразование кадра в оттенки серого
+        cv::Mat grayFrame;
+        cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
+
+        // Конвертация кадра в dlib::matrix
+        dlib::cv_image<unsigned char> dlibImage(grayFrame);
+
+        // Обнаружение лиц на кадре
+        std::vector<dlib::rectangle> faces = detector(dlibImage);
+
+        // Обработка каждого обнаруженного лица
+        for (const auto& face : faces) {
+            // Распознавание ключевых точек лица
+            dlib::full_object_detection landmarks = predictor(dlibImage, face);
+
+            // Отрисовка прямоугольника вокруг лица
+            cv::Rect faceRect(face.left(), face.top(), face.width(), face.height());
+            cv::rectangle(frame, faceRect, cv::Scalar(0, 255, 0), 2);
+
+            // Отрисовка ключевых точек лица
+            for (unsigned int i = 0; i < landmarks.num_parts(); i++) {
+                cv::Point point(landmarks.part(i).x(), landmarks.part(i).y());
+                cv::circle(frame, point, 2, cv::Scalar(0, 0, 255), -1);
+            }
+        }
+
+        // Отображение результата
+        cv::imshow("Video", frame);
+
+        // Выход из цикла по нажатию клавиши 'q'
+        if (cv::waitKey(1) == 'q') {
+            break;
+        }
+    }
+
+    // Освобождение ресурсов
+    videoCapture.release();
+    cv::destroyAllWindows();
+
+    return 0;
+}
+
+
+
 /*
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -40,7 +112,7 @@ int main(int, char**) {
 
 
 
-
+/*
 #include <iostream>
 #include <vector>
 #include <string>
@@ -50,6 +122,8 @@ int main(int, char**) {
 #include <dlib/image_processing.h>
 #include <dlib/image_io.h>
 #include <dlib/gui_widgets.h>
+
+#include "face_recognation.h"
 
 using namespace std;
 using namespace dlib;
@@ -165,3 +239,4 @@ int main()
     return 0;
 }
 
+*/
