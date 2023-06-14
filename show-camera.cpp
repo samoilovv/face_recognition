@@ -358,11 +358,11 @@ int main()
     matrix<rgb_pixel> biden_dlib_image;
     assign_image(biden_dlib_image, cv_image<bgr_pixel>(biden_image));
 
-    matrix<float, 0, 1> obama_face_encoding = face_recognition::face_encodings(obama_dlib_image, face_landmark_predictor)[0];
-    matrix<float, 0, 1> biden_face_encoding = face_recognition::face_encodings(biden_dlib_image, face_landmark_predictor)[0];
+//    matrix<float, 0, 1> obama_face_encoding = face_recognition::face_encodings(obama_dlib_image, face_landmark_predictor)[0];
+//    matrix<float, 0, 1> biden_face_encoding = face_recognition::face_encodings(biden_dlib_image, face_landmark_predictor)[0];
 
-    std::vector<matrix<float, 0, 1>> known_face_encodings = {obama_face_encoding, biden_face_encoding};
-    std::vector<string> known_face_names = {"Vladimir", "Joe Biden"};
+//    std::vector<matrix<float, 0, 1>> known_face_encodings = {obama_face_encoding, biden_face_encoding};
+//    std::vector<string> known_face_names = {"Vladimir", "Joe Biden"};
 
     bool process_this_frame = true;
     cv::Mat frame;
@@ -392,6 +392,7 @@ int main()
                 faces.push_back(move(face_chip));
             }
 
+            /*
             std::vector<matrix<float, 0, 1>> face_encodings = face_recognition::face_encodings(faces);
 
             std::vector<string> face_names;
@@ -416,7 +417,6 @@ int main()
 
                 face_names.push_back(name);
             }
-
             int i = 0;
             for (rectangle face_location : face_locations)
             {
@@ -430,6 +430,7 @@ int main()
 
                 i++;
             }
+            */
         }
 
         process_this_frame = !process_this_frame;
