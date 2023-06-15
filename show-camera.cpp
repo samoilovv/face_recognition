@@ -13,6 +13,9 @@
 #include <dlib/image_io.h>
 #include <dlib/image_processing/frontal_face_detector.h>
 
+#define FACE_DOWNSAMPLE_RATIO 4
+#define SKIP_FRAMES 2
+
 using namespace dlib;
 using namespace std;
 
@@ -69,8 +72,13 @@ int main() {
         return 1;
     }
 
+    // Уменьшить размер эталона для оптимизации
+    cv::Mat small_faceSample;
+    cv::resize(faceSample, small_faceSample, cv::Size(), 1.0/FACE_DOWNSAMPLE_RATIO, 1.0/FACE_DOWNSAMPLE_RATIO);
+
     dlib::matrix<dlib::rgb_pixel> dlibFaceSample;
-    dlib::assign_image(dlibFaceSample, dlib::cv_image<dlib::bgr_pixel>(faceSample));
+
+    dlib::assign_image(dlibFaceSample, dlib::cv_image<dlib::bgr_pixel>(small_faceSample));
 
     // Обнаружение лица на эталоне
     std::vector<dlib::rectangle> faceRects = faceDetector(dlibFaceSample);
@@ -99,9 +107,9 @@ int main() {
     }
 
     cv::Mat frame;
+    cv::Mat small_frame;
     cv::namedWindow("Video");
-
-    bool process_this_frame = true;
+    int count = 0;
     while (true) {       
         // Захват кадра с веб-камеры
         videoCapture.read(frame);
@@ -109,21 +117,24 @@ int main() {
         {
             break;
         }
+        count++;
 
-        if (process_this_frame)
-        {
+        //Не обрабатывать каждый кадр
+        if ( count % SKIP_FRAMES == 0 ) {
 
+            // Уменьшить размер фрейма для оптимизации
+            cv::resize(frame, small_frame, cv::Size(), 1.0/FACE_DOWNSAMPLE_RATIO, 1.0/FACE_DOWNSAMPLE_RATIO);
 
             // Преобразование кадра в оттенки серого
             cv::Mat grayFrame;
-            cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
+            cv::cvtColor(small_frame, grayFrame, cv::COLOR_BGR2GRAY);
 
             // Конвертация кадра в dlib::matrix
             dlib::cv_image<unsigned char> dlibImage(grayFrame);
 
             // Обнаружение лиц на кадре
             std::vector<dlib::rectangle> faceRects = faceDetector(dlibImage);
-    /*
+
             std::vector<matrix<rgb_pixel>> faces1;
             // Обработка каждого обнаруженного лица
             for (const auto& faceRect : faceRects) {
@@ -141,16 +152,14 @@ int main() {
 
                 // Сравнение расстояния с порогом
                 if (distance < threshold) {
-                    cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
-                    cv::putText(frame, "Detected Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
+                    cv::rectangle(small_frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
+                    cv::putText(small_frame, "Detected Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
                 } else {
-                    cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
-                    cv::putText(frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
+                    cv::rectangle(small_frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
+                    cv::putText(small_frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
                 }
             }
-    */
         }
-        process_this_frame = !process_this_frame;
 
         // Отображение результата
         cv::imshow("Video", frame);
