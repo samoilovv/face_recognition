@@ -54,6 +54,10 @@ int main() {
     // Загрузка предобученной модели детектора лиц
     dlib::frontal_face_detector faceDetector = dlib::get_frontal_face_detector();
 
+    //Загрузка предобученной модели ориентации лиц
+    shape_predictor sp;
+    deserialize("shape_predictor_5_face_landmarks.dat") >> sp;
+
     // Загрузка предобученной модели для распознавания лиц
     anet_type faceRecognizer;
     dlib::deserialize(faceModelPath) >> faceRecognizer;
@@ -77,11 +81,15 @@ int main() {
     }
 
     // Извлечение признаков лица для эталона
+    auto shape = sp(dlibFaceSample, faceRects[0]);
 
     matrix<rgb_pixel> face_chip;
-    extract_image_chip(dlibFaceSample, faceRects[0], face_chip);
+    extract_image_chip(dlibFaceSample, get_face_chip_details(shape,150,0.25), face_chip);
 
-    dlib::matrix<float, 0, 1> faceDescriptor = faceRecognizer(face_chip);
+    // image_window win(face_chip);
+    std::vector<matrix<rgb_pixel>> faces;
+    faces.push_back(move(face_chip));
+    std::vector<matrix<float,0,1>> faceDescriptor = faceRecognizer(faces);
 
     // Запуск видеопотока с веб-камеры
     cv::VideoCapture videoCapture(0);
@@ -107,14 +115,17 @@ int main() {
         // Обнаружение лиц на кадре
         std::vector<dlib::rectangle> faceRects = faceDetector(dlibImage);
 
+        std::vector<matrix<rgb_pixel>> faces1;
         // Обработка каждого обнаруженного лица
         for (const auto& faceRect : faceRects) {
             // Распознавание лица
-            extract_image_chip(dlibImage, faceRect, face_chip);
-            dlib::matrix<float, 0, 1> faceDescriptor = faceRecognizer(face_chip);
-
+            auto shape1 = sp(dlibImage, faceRect);
+            matrix<rgb_pixel> face_chip1;
+            extract_image_chip(dlibImage, get_face_chip_details(shape1, 150, 0.25), face_chip1);
+            faces1.push_back(move(face_chip1));
+            std::vector<matrix<float,0,1>> faceDescriptor1 = faceRecognizer(faces1);
             // Вычисление расстояния между эталоном лица и обнаруженным лицом
-            double distance = dlib::length(faceDescriptor - faceDescriptor);
+            double distance = dlib::length(faceDescriptor[0] - faceDescriptor[0]);
 
             // Пороговое значение для сравнения расстояния
             double threshold = 0.6;
