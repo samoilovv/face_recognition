@@ -101,44 +101,56 @@ int main() {
     cv::Mat frame;
     cv::namedWindow("Video");
 
-    while (true) {
+    bool process_this_frame = true;
+    while (true) {       
         // Захват кадра с веб-камеры
-        videoCapture >> frame;
-
-        // Преобразование кадра в оттенки серого
-        cv::Mat grayFrame;
-        cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
-
-        // Конвертация кадра в dlib::matrix
-        dlib::cv_image<unsigned char> dlibImage(grayFrame);
-
-        // Обнаружение лиц на кадре
-        std::vector<dlib::rectangle> faceRects = faceDetector(dlibImage);
-
-        std::vector<matrix<rgb_pixel>> faces1;
-        // Обработка каждого обнаруженного лица
-        for (const auto& faceRect : faceRects) {
-            // Распознавание лица
-            auto shape1 = sp(dlibImage, faceRect);
-            matrix<rgb_pixel> face_chip1;
-            extract_image_chip(dlibImage, get_face_chip_details(shape1, 150, 0.25), face_chip1);
-            faces1.push_back(move(face_chip1));
-            std::vector<matrix<float,0,1>> faceDescriptor1 = faceRecognizer(faces1);
-            // Вычисление расстояния между эталоном лица и обнаруженным лицом
-            double distance = dlib::length(faceDescriptor[0] - faceDescriptor[0]);
-
-            // Пороговое значение для сравнения расстояния
-            double threshold = 0.6;
-
-            // Сравнение расстояния с порогом
-            if (distance < threshold) {
-                cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
-                cv::putText(frame, "Detected Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
-            } else {
-                cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
-                cv::putText(frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
-            }
+        videoCapture.read(frame);
+        if (frame.empty())
+        {
+            break;
         }
+
+        if (process_this_frame)
+        {
+
+
+            // Преобразование кадра в оттенки серого
+            cv::Mat grayFrame;
+            cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
+
+            // Конвертация кадра в dlib::matrix
+            dlib::cv_image<unsigned char> dlibImage(grayFrame);
+
+            // Обнаружение лиц на кадре
+            std::vector<dlib::rectangle> faceRects = faceDetector(dlibImage);
+    /*
+            std::vector<matrix<rgb_pixel>> faces1;
+            // Обработка каждого обнаруженного лица
+            for (const auto& faceRect : faceRects) {
+                // Распознавание лица
+                auto shape1 = sp(dlibImage, faceRect);
+                matrix<rgb_pixel> face_chip1;
+                extract_image_chip(dlibImage, get_face_chip_details(shape1, 150, 0.25), face_chip1);
+                faces1.push_back(move(face_chip1));
+                std::vector<matrix<float,0,1>> faceDescriptor1 = faceRecognizer(faces1);
+                // Вычисление расстояния между эталоном лица и обнаруженным лицом
+                double distance = dlib::length(faceDescriptor[0] - faceDescriptor1[0]);
+
+                // Пороговое значение для сравнения расстояния
+                double threshold = 0.6;
+
+                // Сравнение расстояния с порогом
+                if (distance < threshold) {
+                    cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
+                    cv::putText(frame, "Detected Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
+                } else {
+                    cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
+                    cv::putText(frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
+                }
+            }
+    */
+        }
+        process_this_frame = !process_this_frame;
 
         // Отображение результата
         cv::imshow("Video", frame);
@@ -147,6 +159,7 @@ int main() {
         if (cv::waitKey(1) == 'q') {
             break;
         }
+
     }
 
     // Освобождение ресурсов
