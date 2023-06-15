@@ -73,12 +73,12 @@ int main() {
     }
 
     // Уменьшить размер эталона для оптимизации
-    cv::Mat small_faceSample;
-    cv::resize(faceSample, small_faceSample, cv::Size(), 1.0/FACE_DOWNSAMPLE_RATIO, 1.0/FACE_DOWNSAMPLE_RATIO);
+//    cv::Mat small_faceSample;
+//    cv::resize(faceSample, small_faceSample, cv::Size(), 1.0/FACE_DOWNSAMPLE_RATIO, 1.0/FACE_DOWNSAMPLE_RATIO);
 
     dlib::matrix<dlib::rgb_pixel> dlibFaceSample;
 
-    dlib::assign_image(dlibFaceSample, dlib::cv_image<dlib::bgr_pixel>(small_faceSample));
+    dlib::assign_image(dlibFaceSample, dlib::cv_image<dlib::bgr_pixel>(faceSample));
 
     // Обнаружение лица на эталоне
     std::vector<dlib::rectangle> faceRects = faceDetector(dlibFaceSample);
@@ -107,7 +107,6 @@ int main() {
     }
 
     cv::Mat frame;
-    cv::Mat small_frame;
     cv::namedWindow("Video");
     int count = 0;
     while (true) {       
@@ -120,14 +119,16 @@ int main() {
         count++;
 
         //Не обрабатывать каждый кадр
-        if ( count % SKIP_FRAMES == 0 ) {
+        //if (count % SKIP_FRAMES == 0)
+        {
 
             // Уменьшить размер фрейма для оптимизации
-            cv::resize(frame, small_frame, cv::Size(), 1.0/FACE_DOWNSAMPLE_RATIO, 1.0/FACE_DOWNSAMPLE_RATIO);
+//            cv::Mat small_frame;
+//            cv::resize(frame, small_frame, cv::Size(), 1.0/FACE_DOWNSAMPLE_RATIO, 1.0/FACE_DOWNSAMPLE_RATIO);
 
             // Преобразование кадра в оттенки серого
             cv::Mat grayFrame;
-            cv::cvtColor(small_frame, grayFrame, cv::COLOR_BGR2GRAY);
+            cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
 
             // Конвертация кадра в dlib::matrix
             dlib::cv_image<unsigned char> dlibImage(grayFrame);
@@ -152,11 +153,11 @@ int main() {
 
                 // Сравнение расстояния с порогом
                 if (distance < threshold) {
-                    cv::rectangle(small_frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
-                    cv::putText(small_frame, "Detected Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
+                    cv::rectangle(frame, cv::Rect(faceRect.left()/**FACE_DOWNSAMPLE_RATIO*/, faceRect.top()/**FACE_DOWNSAMPLE_RATIO*/, faceRect.width()/**FACE_DOWNSAMPLE_RATIO*/, faceRect.height()/**FACE_DOWNSAMPLE_RATIO*/), cv::Scalar(0, 255, 0), 2);
+                    cv::putText(frame, "Detected Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
                 } else {
-                    cv::rectangle(small_frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
-                    cv::putText(small_frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
+                    cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
+                    cv::putText(frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
                 }
             }
         }
