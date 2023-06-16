@@ -48,6 +48,7 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
 
 // Путь к файлу с моделью для распознавания лиц
 std::string faceModelPath = "dlib_face_recognition_resnet_model_v1.dat";
+// Путь к файлу с моделью для ориентации лиц
 std::string landmarksModelPath = "shape_predictor_5_face_landmarks.dat";
 
 // Путь к папке с эталонами лиц
@@ -77,6 +78,7 @@ void loadFaceSamples(const std::string& samplesPath, std::vector<matrix<float,0,
     }
 
     // Загрузка каждого изображения и его метки
+    std::vector<matrix<rgb_pixel>> faces;
     for (const auto& file : fileList) {
         cv::Mat image = cv::imread(file);
         if (image.empty()) {
@@ -90,17 +92,16 @@ void loadFaceSamples(const std::string& samplesPath, std::vector<matrix<float,0,
         // Обнаружение лица на эталоне
         std::vector<dlib::rectangle> faceRects = faceDetector(dlibImage);
 
-        std::vector<matrix<rgb_pixel>> faces;
         if (!faceRects.empty()) {
 
             auto shape = sp(dlibImage, faceRects[0]);
             matrix<rgb_pixel> face_chip;
             extract_image_chip(dlibImage, get_face_chip_details(shape, 150, 0.25), face_chip);
             faces.push_back(std::move(face_chip));
-            faceLabels.push_back(file.substr(file.find_last_of('/') + 1));
+            faceLabels.push_back(removeFileExtension(file.substr(file.find_last_of('/') + 1)));
         }
-        faceSamplesDescriptor = faceRecognizer(faces);
     }
+    faceSamplesDescriptor = faceRecognizer(faces);
 }
 
 int main() {
@@ -118,7 +119,6 @@ int main() {
     // Загрузка эталонов лиц и их меток
     std::vector<matrix<float,0,1>> faceSamples;
     std::vector<std::string> faceLabels;
-
     loadFaceSamples(faceSamplesPath, faceSamples, faceLabels, faceDetector, faceRecognizer, sp);
 
     // Запуск видеопотока с веб-камеры
@@ -157,8 +157,9 @@ int main() {
 
             // Поиск наиболее близкого эталона лица
             double minDistance = std::numeric_limits<double>::max();
+            double distance = minDistance;
             std::string closestFaceLabel;
-            double distance = 1;
+
             for (size_t i = 0; i < faceSamples.size(); ++i) {
                 distance = dlib::length(faceSamples[i] - faceDescriptor[0]);
                 if (distance < minDistance) {
@@ -173,13 +174,12 @@ int main() {
             // Сравнение расстояния с порогом и отрисовка прямоугольника вокруг лица и метки с идентификацией
             if (distance < threshold) {
                 cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
-                cv::putText(frame, removeFileExtension(closestFaceLabel), cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
+                cv::putText(frame, closestFaceLabel, cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
             } else {
                 cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 0, 255), 2);
                 cv::putText(frame, "Unknown Face", cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
             }
         }
-
 
         // Отображение результата
         cv::imshow("Video", frame);
