@@ -9,13 +9,6 @@
 #include <dlib/dnn.h>
 #include <filesystem>
 
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include <dlib/opencv.h>
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/image_processing.h>
-#include <dlib/dnn.h>
-
 using namespace dlib;
 
 template <template <int,template<typename>class,int,typename> class block, int N, template<typename>class BN, typename SUBNET>
@@ -47,12 +40,11 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
                             >>>>>>>>>>>>;
 
 // Путь к файлу с моделью для распознавания лиц
-std::string faceModelPath = "dlib_face_recognition_resnet_model_v1.dat";
+const std::string faceModelPath = "dlib_face_recognition_resnet_model_v1.dat";
 // Путь к файлу с моделью для ориентации лиц
-std::string landmarksModelPath = "shape_predictor_5_face_landmarks.dat";
-
+const std::string landmarksModelPath = "shape_predictor_5_face_landmarks.dat";
 // Путь к папке с эталонами лиц
-std::string faceSamplesPath = "face_samples/";
+const std::string faceSamplesPath = "face_samples/";
 
 // Отбросить расширение файла
 std::string removeFileExtension(const std::string& filename) {
@@ -170,6 +162,7 @@ int main() {
 
             // Пороговое значение для сравнения расстояния
             double threshold = 0.6;
+            cv::putText(frame, "Distance: " + std::to_string(distance), cv::Point(100, 100), cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(255, 255, 255));
 
             // Сравнение расстояния с порогом и отрисовка прямоугольника вокруг лица и метки с идентификацией
             if (distance < threshold) {
