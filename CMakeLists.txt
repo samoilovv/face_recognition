@@ -18,11 +18,9 @@ target_link_libraries(${PROJECT_NAME}
     dlib::dlib
 )
 
-set(landmarks68 shape_predictor_68_face_landmarks.dat)
 set(landmarks5 shape_predictor_5_face_landmarks.dat)
 set(model dlib_face_recognition_resnet_model_v1.dat)
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${landmarks68} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${landmarks5} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${model} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/face_samples)

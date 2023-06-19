@@ -42,7 +42,7 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
 // Путь к файлу с моделью для распознавания лиц
 const std::string faceModelPath = "dlib_face_recognition_resnet_model_v1.dat";
 // Путь к файлу с моделью для ориентации лиц
-const std::string landmarksModelPath = "shape_predictor_68_face_landmarks.dat";
+const std::string landmarksModelPath = "shape_predictor_5_face_landmarks.dat";
 // Путь к папке с эталонами лиц
 const std::string faceSamplesPath = "face_samples/";
 
