@@ -2,5 +2,5 @@ CMakeCache.txt
 CMakeFiles/
 Makefile
 cmake_install.cmake
-*.user
+CMakeLists.txt.user
 

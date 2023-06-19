@@ -42,7 +42,7 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
 // Путь к файлу с моделью для распознавания лиц
 const std::string faceModelPath = "dlib_face_recognition_resnet_model_v1.dat";
 // Путь к файлу с моделью для ориентации лиц
-const std::string landmarksModelPath = "shape_predictor_5_face_landmarks.dat";
+const std::string landmarksModelPath = "shape_predictor_68_face_landmarks.dat";
 // Путь к папке с эталонами лиц
 const std::string faceSamplesPath = "face_samples/";
 
@@ -149,7 +149,7 @@ int main() {
 
             // Поиск наиболее близкого эталона лица
             double minDistance = std::numeric_limits<double>::max();
-            double distance = minDistance;
+            double distance = 1;
             std::string closestFaceLabel;
 
             for (size_t i = 0; i < faceSamples.size(); ++i) {
@@ -162,7 +162,10 @@ int main() {
 
             // Пороговое значение для сравнения расстояния
             double threshold = 0.6;
-            cv::putText(frame, "Distance: " + std::to_string(distance), cv::Point(100, 100), cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(255, 255, 255));
+            std::stringstream ss;
+            ss << "Distance: " << std::fixed << std::setprecision(2) << distance;
+            std::string dist = ss.str();
+            cv::putText(frame, dist, cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(255, 255, 255));
 
             // Сравнение расстояния с порогом и отрисовка прямоугольника вокруг лица и метки с идентификацией
             if (distance < threshold) {
