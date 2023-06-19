@@ -1,5 +1,5 @@
 # Face Recognition with webcam (Face ID)
-Face recognition (Face ID) using С++, OpenCV, Dlib with webcam. 
+Face recognition with webcam (Face ID) using С++, OpenCV, Dlib. 
 
 ## Quick Start
 
