@@ -23,7 +23,7 @@ cmake --build .
 
 ### Run
 
-Copy the sample face files to the folder face_samples and run the program
+Copy the sample face jpg files to the folder face_samples and run the program
 ```bash
 ./face_recognation
 ```
