@@ -8,9 +8,8 @@ Face recognition with webcam (Face ID) using С++, OpenCV, Dlib.
 Clone the repository:
 
 ```bash
-git clone https://github.com/samoilovv/face_recognition.git
-cd face_recognition
-git submodule update --init --recursive
+git clone https://github.com/samoilovv/webcam_face_recognition.git
+cd webcam_face_recognition
 ``` 
 
 You can build the project on any platform (Linux, Windows, MacOS) using the following commands:
