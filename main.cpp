@@ -59,7 +59,7 @@ std::string removeFileExtension(const std::string& filename) {
 }
 
 // Загрузка эталонов лиц и их меток
-void loadFaceSamples(const std::string& samplesPath, std::vector<matrix<float,0,1>>& faceSamplesDescriptor, std::vector<std::string>& faceLabels,
+void loadFaceSamples(const std::string& samplesPath, std::vector<matrix<float,0,1>>& faceSamplesDescriptors, std::vector<std::string>& faceLabels,
                      dlib::frontal_face_detector& faceDetector, anet_type& faceRecognizer, const shape_predictor& sp) {
     // Получение списка файлов изображений в папке
     std::vector<std::string> fileList;
@@ -94,7 +94,7 @@ void loadFaceSamples(const std::string& samplesPath, std::vector<matrix<float,0,
             faceLabels.push_back(removeFileExtension(file.substr(file.find_last_of('/') + 1)));
         }
     }
-    faceSamplesDescriptor = faceRecognizer(faces);
+    faceSamplesDescriptors = faceRecognizer(faces);
 }
 
 int main() {
@@ -169,7 +169,7 @@ int main() {
             cv::putText(frame, dist, cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(255, 255, 255));
 
             // Сравнение расстояния с порогом и отрисовка прямоугольника вокруг лица и метки с идентификацией
-            if (distance < threshold) {
+            if (minDistance < threshold) {
                 cv::rectangle(frame, cv::Rect(faceRect.left(), faceRect.top(), faceRect.width(), faceRect.height()), cv::Scalar(0, 255, 0), 2);
                 cv::putText(frame, closestFaceLabel, cv::Point(faceRect.left(), faceRect.top() - 10), cv::FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 255, 0), 2);
             } else {
