@@ -63,6 +63,7 @@ void loadFaceSamples(const std::string& samplesPath, std::vector<matrix<float,0,
                      dlib::frontal_face_detector& faceDetector, anet_type& faceRecognizer, const shape_predictor& sp) {
     // Получение списка файлов изображений в папке
     std::vector<std::string> fileList;
+
     for (const auto& entry : std::filesystem::directory_iterator(samplesPath)) {
         if (entry.is_regular_file()) {
             fileList.push_back(entry.path().string());
