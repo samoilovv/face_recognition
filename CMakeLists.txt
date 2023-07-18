@@ -50,36 +50,32 @@ add_executable(${PROJECT_NAME}
 
 add_subdirectory(opencv opencv_build)
 set(JPEG_FOUND 0)
-
 add_subdirectory(dlib dlib_build)
 
-
-
 target_link_libraries(${PROJECT_NAME}
-#    ${OpenCV_LIBS}
-opencv_calib3d
-opencv_core
-opencv_dnn
-opencv_features2d
-opencv_flann
-opencv_gapi
-opencv_highgui
-opencv_imgcodecs
-opencv_imgproc
-opencv_ml
-opencv_objdetect
-opencv_photo
-opencv_stitching
-opencv_video
-opencv_videoio
-dlib::dlib
+    opencv_calib3d
+    opencv_core
+    opencv_dnn
+    opencv_features2d
+    opencv_flann
+    opencv_gapi
+    opencv_highgui
+    opencv_imgcodecs
+    opencv_imgproc
+    opencv_ml
+    opencv_objdetect
+    opencv_photo
+    opencv_stitching
+    opencv_video
+    opencv_videoio
+    dlib::dlib
 )
 
 set(landmarks5 shape_predictor_5_face_landmarks.dat)
 set(model dlib_face_recognition_resnet_model_v1.dat)
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${landmarks5} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${model} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${landmarks5} DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${model} DESTINATION ${CMAKE_BINARY_DIR})
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/face_samples)
 file(GLOB FACE_SAMPLES ${CMAKE_CURRENT_SOURCE_DIR}/face_samples/*.jpg)
 file(COPY ${FACE_SAMPLES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/face_samples)

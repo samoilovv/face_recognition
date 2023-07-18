@@ -2,19 +2,17 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <opencv2/opencv.hpp>
-#include <dlib/opencv.h>
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/image_processing.h>
-#include <dlib/dnn.h>
-#include <iostream>
-#include <vector>
 #include <string>
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <dirent.h>
 #endif
+#include <opencv2/opencv.hpp>
+#include <dlib/opencv.h>
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing.h>
+#include <dlib/dnn.h>
 
 using namespace dlib;
 
