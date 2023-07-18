@@ -7,7 +7,14 @@
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing.h>
 #include <dlib/dnn.h>
-#include <filesystem>
+#include <iostream>
+#include <vector>
+#include <string>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <dirent.h>
+#endif
 
 using namespace dlib;
 
@@ -58,16 +65,51 @@ std::string removeFileExtension(const std::string& filename) {
     }
 }
 
+void getFileList(const std::string& directory, std::vector<std::string>& fileList) {
+#ifdef _WIN32
+    std::string searchPath = directory + "\\*";
+    WIN32_FIND_DATAA fileData;
+    HANDLE hFind = FindFirstFileA(searchPath.c_str(), &fileData);
+
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            std::string filename = fileData.cFileName;
+            if (filename != "." && filename != "..") {
+                std::string fullPath = directory + "\\" + filename;
+                fileList.push_back(fullPath);
+            }
+        } while (FindNextFileA(hFind, &fileData) != 0);
+
+        FindClose(hFind);
+    } else {
+        std::cerr << "Не удалось открыть директорию: " << directory << std::endl;
+    }
+#else
+    DIR* dir;
+    struct dirent* entry;
+
+    if ((dir = opendir(directory.c_str())) != nullptr) {
+        while ((entry = readdir(dir)) != nullptr) {
+            std::string filename = entry->d_name;
+            if (filename != "." && filename != "..") {
+                std::string fullPath = directory + "/" + filename;
+                fileList.push_back(fullPath);
+            }
+        }
+        closedir(dir);
+    } else {
+        std::cerr << "Не удалось открыть директорию: " << directory << std::endl;
+    }
+#endif
+}
+
+
 // Загрузка эталонов лиц и их меток
 void loadFaceSamples(const std::string& samplesPath, std::vector<matrix<float,0,1>>& faceSamplesDescriptor, std::vector<std::string>& faceLabels,
                      dlib::frontal_face_detector& faceDetector, anet_type& faceRecognizer, const shape_predictor& sp) {
     // Получение списка файлов изображений в папке
     std::vector<std::string> fileList;
-    for (const auto& entry : std::filesystem::directory_iterator(samplesPath)) {
-        if (entry.is_regular_file()) {
-            fileList.push_back(entry.path().string());
-        }
-    }
+    getFileList(samplesPath, fileList);
 
     // Загрузка каждого изображения и его метки
     std::vector<matrix<rgb_pixel>> faces;
